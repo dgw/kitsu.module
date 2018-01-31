@@ -1,5 +1,5 @@
 module.exports = {
-    desc: 'Queries the Kitsu API located at https://kitsu.docs.apiary.io',
+    desc: 'Queries the Kitsu API with the help of their docs located at https://kitsu.docs.apiary.io',
     usage: 'ka Clannad',
     commands: ['ka', 'kitsu', 'ku'],
     main: function (from, to, text, mes, com) {
