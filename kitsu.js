@@ -21,7 +21,7 @@ module.exports = {
                             date = JSON.parse(body).data.attributes.startDate.substring(0,4),
                             slug = JSON.parse(body).data.attributes.slug,
                             synopsis = JSON.parse(body).data.attributes.synopsis.substring(0,350)
-                        if (JSON.parse(body).data.attributes.subtype === 'special' || JSON.parse(body).data.attributes.subtype === 'music') {bot.say(out, '\u000304No results found for "' + text + '"')} else {
+                        if (JSON.parse(body).data.attributes.subtype === 'special' || JSON.parse(body).data.attributes.subtype === 'music') {bot.say(out, '\u000304No anime results found for "' + text + '"')} else {
                             bot.say(out, '\u00030,04[' + subType + ']\u000f ' + title + ' \u000312(\u000f' + enTitle + '\u000312)\u000f -' + ' \u000312(\u000f' + status + '\u000312)\u000f -' + ' \u00030,04' + count + '\u000f Episodes -' + ' Aired \u000312(\u000f' + date + '\u000312)\u000f -' + ' \u00030,06https://kitsu.io/anime/' + slug + '\u000f')
                             bot.say(out, synopsis + '...(cont.)')
                         }
