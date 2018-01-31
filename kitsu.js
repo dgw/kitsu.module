@@ -1,5 +1,5 @@
 module.exports = {
-    desc: 'Queries Kitsu API',
+    desc: 'Queries the Kitsu API located at https://kitsu.docs.apiary.io',
     usage: 'ka Clannad',
     commands: ['ka', 'kitsu', 'ku'],
     main: function (from, to, text, mes, com) {
@@ -39,7 +39,7 @@ module.exports = {
                         libraryLink = api + 'users/' + uid + lFilter
                     request(statsLink, function (error, response, body) {
                         if (JSON.parse(body).meta.count === 0) {bot.say(out, '\u000304The barbarian known as "' + text + '" has never watched anime!')} else {
-                            var lwoa = JSON.parse(body).data[0].attributes.statsData.all_time.total_time
+                            var lwoa = JSON.parse(body).data[0].attributes.statsData.time
                             request(libraryLink, function (error, response, body) {
                                 var a0Name = JSON.parse(body).included[0].attributes.canonicalTitle,
                                     a1Name = JSON.parse(body).included[1].attributes.canonicalTitle,
