@@ -11,21 +11,21 @@ def fetch_result(query):
 	if not query:
 		return "No search query provided."
 	try:
-		r = requests.get(url=api aFilter query, timeout=(10.0, 4.0))
+		call = requests.get(url=api aFilter query, timeout=(10.0, 4.0))
 	except requests.exceptions.ConnectTimeout:
 		return "Connection timed out."
 	except requests.exceptions.ConnectionError:
-		return "Couldn't connect to server."
+		return "Could not connect to Kitsu."
 	except requests.exceptions.ReadTimeout:
-		return "Server took too long to send data."
+		return "Kitsu took too long to return results."
 	try:
-		r.raise_for_status()
+		call.raise_for_status()
 	except requests.exceptions.HTTPError as e:
 		return "HTTP error: " + e.message
 	try:
-		data = r.json()
+		data = call.json()
 	except ValueError:
-		return r.content
+		return call.content
 	try:
 		entry = data['data'][0]
 	except IndexError:
