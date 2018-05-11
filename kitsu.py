@@ -2,7 +2,7 @@ from sopel.module import commands, example
 import requests
 api = 'https://kitsu.io/api/edge/'
 aFilter = 'anime?page[limit]=5&filter[text]='
-@commands('kitsu', 'ka', 'ku')
+@commands('kitsu', 'ka')
 @example('.kitsu Clannad')
 def kitsu(bot, trigger):
 	query = trigger.group(2) or None
