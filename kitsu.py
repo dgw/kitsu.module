@@ -31,4 +31,4 @@ def fetch_result(query):
 	except IndexError:
 		return "No results found."
 	title = entry['attributes'][0].get('canonicalTitle')
-return "{title}".format(title=title)
+	return "{title}".format(title=title)
