@@ -1,8 +1,8 @@
 from sopel.module import commands, example
 from sopel import web
 import requests
-api = 'https://kitsu.io/api/edge/anime?page[limit]=1&filter[text]=%s'
-@commands('kitsu')
+api = 'https://kitsu.io/api/edge/anime?page[limit]=5&filter[text]=%s'
+@commands('kitsu', 'ka')
 @example('.kitsu Clannad')
 def kitsu(bot, trigger):
 	query = trigger.group(2) or None
@@ -26,6 +26,8 @@ def fetch_result(query):
 		data = r.json()
 	except ValueError:
 		return r.content
+	if data['meta']['count'] = 0:
+		return "No results found"
 	try:
 		entry = data['data'][0]
 	except IndexError:
@@ -34,7 +36,7 @@ def fetch_result(query):
 	enTitle = entry['attributes']['titles'].get('en', 'Unknown')
 	status = entry['attributes'].get('status', 'Unknown')
 	count = entry['attributes'].get('episodeCount', 'Unknown')
-	date = entry['attributes'].get('startDate', 'Unknown')[:4]
+	date = entry['attributes'].get('startDate', 'None')[:4]
 	slug = entry['attributes'].get('slug', 'Unknown')
 	synopsis = entry['attributes'].get('synopsis', 'Unknown')[:250]
 	return "{title} ({enTitle}) - {status} - {count} Episodes - Aired: {date} - https://kitsu.io/anime/{slug} - Synopsis: {synopsis}...".format(title=title, enTitle=enTitle, status=status, count=count, date=date, slug=slug, synopsis=synopsis)
