@@ -1,31 +1,30 @@
 from sopel.module import commands, example
 import requests
-api = 'https://kitsu.io/api/edge/'
-aFilter = 'anime?page[limit]=5&filter[text]='
+api = 'https://kitsu.io/api/edge/anime?page[limit]=1&filter[text]=%s'
 @commands('kitsu')
 @example('.kitsu Clannad')
 def kitsu(bot, trigger):
 	query = trigger.group(2) or None
-	bot.say("[Kitsu] " + fetch_result(query))
+	bot.say("[Kitsu] %s" % fetch_result(query))
 def fetch_result(query):
 	if not query:
 		return "No search query provided."
 	try:
-		call = requests.get(api + aFilter + query, timeout=(10.0, 4.0))
+		r = requests.get(url=api % query, timeout=(10.0, 4.0))
 	except requests.exceptions.ConnectTimeout:
 		return "Connection timed out."
 	except requests.exceptions.ConnectionError:
-		return "Could not connect to Kitsu."
+		return "Could not connect to server."
 	except requests.exceptions.ReadTimeout:
-		return "Kitsu took too long to return results."
+		return "Server took too long to send results."
 	try:
-		call.raise_for_status()
+		r.raise_for_status()
 	except requests.exceptions.HTTPError as e:
 		return "HTTP error: " + e.message
 	try:
-		data = call.json()
+		data = r.json()
 	except ValueError:
-		return call.content
+		return r.content
 	try:
 		entry = data['data'][0]
 	except IndexError:
