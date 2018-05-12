@@ -29,5 +29,11 @@ def fetch_result(query):
 		entry = data['data'][0]
 	except IndexError:
 		return "No results found."
-	title = entry['attributes'][0].get('canonicalTitle')
-	return "{title}".format(title=title)
+	title = entry['attributes'].get('canonicalTitle')
+	enTitle = entry['attributes']['titles'].get('en')
+	status = entry['attributes'].get('status')
+	count = entry['attributes'].get('episodeCount')
+	date = entry['attributes'].get('startDate')[:4]
+	slug = entry['attributes'].get('slug')
+	synopsis = entry['attributes'].get('synopsis')[:350]
+	return "{title} ({enTitle}) - {status} - {count} Episodes - Aired: {date} - https://kitsu.io/anime/{slug} - {synopsis}...".format(title=title, enTitle=enTitle, status=status, count=count, date=date, slug=slug, synopsis=synopsis)
