@@ -37,4 +37,4 @@ def fetch_result(query):
 	date = entry['attributes'].get('startDate', 'Unknown')[:4]
 	slug = entry['attributes'].get('slug', 'Unknown')
 	synopsis = entry['attributes'].get('synopsis', 'Unknown')[:250]
-	return "{title} ({enTitle}) - {status} - {count} Episodes - Aired: {date} - https://kitsu.io/anime/{slug} - {synopsis}...".format(title=title, enTitle=enTitle, status=status, count=count, date=date, slug=slug, synopsis=synopsis)
+	return "{title} ({enTitle}) - {status} - {count} Episodes - Aired: {date} - https://kitsu.io/anime/{slug} - Synopsis:{synopsis}...".format(title=title, enTitle=enTitle, status=status, count=count, date=date, slug=slug, synopsis=synopsis)
