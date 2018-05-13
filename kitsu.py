@@ -79,10 +79,10 @@ def fetch_user(query):
 	libraryLink = api + 'users/' + uid + lFilter
 	try:
 		stats = requests.get(statsLink)
-	try:
-		sData = stats.json()
 	except IndexError:
 		return "No stats found."
+	try:
+		sData = stats.json()
 	except ValueError:
 		return stats.content
 	try:
