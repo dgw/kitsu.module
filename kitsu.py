@@ -1,5 +1,4 @@
 from sopel.module import commands, example
-from sopel import web
 import requests
 api = 'https://kitsu.io/api/edge/'
 aFilter = 'anime?page[limit]=5&filter[text]=%s'
@@ -15,7 +14,7 @@ def fetch_anime(query):
 	if not query:
 		return "No search query provided."
 	try:
-		anime = requests.get(api + aFilter % web.quote(query), timeout=(10.0, 4.0))
+		anime = requests.get(api + aFilter % query, timeout=(10.0, 4.0))
 	except requests.exceptions.ConnectTimeout:
 		return "Connection timed out."
 	except requests.exceptions.ConnectionError:
@@ -44,7 +43,7 @@ def fetch_anime(query):
 	slug = aEntry['attributes'].get('slug', 'Unknown')
 	synopsis = aEntry['attributes'].get('synopsis', 'Unknown')[:250]
 	return "{title} ({enTitle}) - {status} - {count} Episodes - Aired: {date} - https://kitsu.io/anime/{slug} - Synopsis: {synopsis}...".format(title=title, enTitle=enTitle, status=status, count=count, date=date, slug=slug, synopsis=synopsis)
-@commands('ka')
+@commands('ku')
 def ku(bot, trigger):
 	query = trigger.group(2) or None
 	bot.say("[Kitsu] %s" % fetch_user(query))
@@ -52,7 +51,7 @@ def fetch_user(query):
 	if not query:
 		return "No search query provided."
 	try:
-		user = requests.get(api + uFilter % web.quote(query), timeout=(10.0, 4.0))
+		user = requests.get(api + uFilter % query, timeout=(10.0, 4.0))
 	except requests.exceptions.ConnectTimeout:
 		return "Connection timed out."
 	except requests.exceptions.ConnectionError:
