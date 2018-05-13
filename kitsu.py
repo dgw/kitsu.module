@@ -81,13 +81,19 @@ def fetch_user(query):
 		stats = requests.get(statsLink)
 	try:
 		sData = stats.json()
+	except IndexError:
+		return "No stats found."
 	except ValueError:
 		return stats.content
 	try:
 		sEntry = sData['data'][0]
+	except IndexError:
+		return "No stats found."
 	lwoa = sEntry['attributes']['statsData'].get('time', 'None!')
 	try:
 		library = requests.get(libraryLink)
+	except IndexError:
+		return "No libraries found."
 	try:
 		lData = library.json()
 	except ValueError:
@@ -100,11 +106,15 @@ def fetch_user(query):
 	a2Prog = lData['data'][2]['attributes'].get('progress', 'None!')
 	try:
 		waifus = requests.get(waifuLink)
+	except IndexError:
+		return "No waifus found."
 	try:
 		wData = waifus.json()
 	except ValueError:
 		return waifus.content
 	try:
 		wEntry = wData['data']
+	except IndexError:
+		return "No waifus found."
 	waifu = wEntry['attributes'].get('name', 'None Set!')
 	return "{userName} - Waifu: {waifu} - Life Wasted On Anime: {lwoa} minutes - https://kitsu.io/users/{uid} - Last Updated: {a0Name} to {a0Prog}, {a1Name} to {a1Prog} and {a2Name} to {a2Prog}".format(userName=userName, waifu=waifu, lwoa=lwoa, uid=uid, a0Name=a0Name, a1Name=a1Name, a2Name=a2Name, a0Prog=a0Prog, a1Prog=a1Prog, a2Prog=a2Prog)
