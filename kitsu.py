@@ -6,7 +6,7 @@ aFilter = 'anime?page[limit]=5&filter[text]=%s'
 uFilter = 'users?include=waifu&page[limit]=1&filter[name]=%s'
 sFilter = '/stats?filter[kind]=anime-amount-consumed'
 lFilter = '/library-entries?page[limit]=3&sort=-progressedAt,updatedAt&include=media&fields[libraryEntries]=status,progress'
-@commands('ka', 'ku')
+@commands('ka')
 @example('.ka Clannad')
 def ka(bot, trigger):
 	query = trigger.group(2) or None
@@ -44,6 +44,7 @@ def fetch_anime(query):
 	slug = aEntry['attributes'].get('slug', 'Unknown')
 	synopsis = aEntry['attributes'].get('synopsis', 'Unknown')[:250]
 	return "{title} ({enTitle}) - {status} - {count} Episodes - Aired: {date} - https://kitsu.io/anime/{slug} - Synopsis: {synopsis}...".format(title=title, enTitle=enTitle, status=status, count=count, date=date, slug=slug, synopsis=synopsis)
+@commands('ka')
 def ku(bot, trigger):
 	query = trigger.group(2) or None
 	bot.say("[Kitsu] %s" % fetch_user(query))
