@@ -50,6 +50,7 @@ def ku(bot, trigger):
 def fetch_user(query):
 	if not query:
 		return "No search query provided."
+#	user section
 	try:
 		user = requests.get(api + uFilter % query, timeout=(10.0, 4.0))
 	except requests.exceptions.ConnectTimeout:
@@ -75,10 +76,24 @@ def fetch_user(query):
 	uid = uEntry['id']
 	slug = uEntry['attributes']['slug']
 	userName = uEntry['attributes']['name']
+#	waifu section
 	waifuOrHusbando = uEntry['attributes']['waifuOrHusbando']
 	waifuLink = api + 'users/' + uid + '/waifu'
+	try:
+		waifus = requests.get(waifuLink)
+	except IndexError:
+		return "No waifus found."
+	try:
+		wData = waifus.json()
+	except ValueError:
+		return waifus.content
+	try:
+		wEntry = wData['data']
+	except IndexError:
+		return "No waifus found."
+	waifu = wEntry['attributes']['name']
+#	stats section
 	statsLink = api + 'users/' + uid + sFilter
-	libraryLink = api + 'users/' + uid + lFilter
 	try:
 		stats = requests.get(statsLink)
 	except IndexError:
@@ -92,6 +107,8 @@ def fetch_user(query):
 	except IndexError:
 		return "No stats found."
 	lwoa = sEntry['attributes']['statsData']['time']
+#	library section
+	libraryLink = api + 'users/' + uid + lFilter
 	try:
 		library = requests.get(libraryLink)
 	except IndexError:
@@ -106,17 +123,5 @@ def fetch_user(query):
 	a0Prog = lData['data'][0]['attributes']['progress']
 	a1Prog = lData['data'][1]['attributes']['progress']
 	a2Prog = lData['data'][2]['attributes']['progress']
-	try:
-		waifus = requests.get(waifuLink)
-	except IndexError:
-		return "No waifus found."
-	try:
-		wData = waifus.json()
-	except ValueError:
-		return waifus.content
-	try:
-		wEntry = wData['data']
-	except IndexError:
-		return "No waifus found."
-	waifu = wEntry['attributes']['name']
+#	results output
 	return "{userName} - {waifuOrHusbando}: {waifu} - Life Wasted On Anime: {lwoa} minutes - https://kitsu.io/users/{slug} - Last Updated: {a0Name} to {a0Prog}, {a1Name} to {a1Prog} and {a2Name} to {a2Prog}".format(userName=userName, waifu=waifu, slug=slug, waifuOrHusbando=waifuOrHusbando, lwoa=lwoa, uid=uid, a0Name=a0Name, a1Name=a1Name, a2Name=a2Name, a0Prog=a0Prog, a1Prog=a1Prog, a2Prog=a2Prog)
