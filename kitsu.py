@@ -2,7 +2,7 @@ from sopel.module import commands, example
 import requests
 api = 'https://kitsu.io/api/edge/'
 aFilter = 'anime?page[limit]=5&filter[text]=%s'
-uFilter = 'users?include=waifu&page[limit]=1&filter[name]=%s'
+uFilter = 'users?include=stats,waifu&page[limit]=1&filter[name]=%s'
 sFilter = '/stats?filter[kind]=anime-amount-consumed'
 lFilter = '/library-entries?page[limit]=3&sort=-progressedAt,updatedAt&include=media&fields[libraryEntries]=status,progress'
 @commands('ka')
@@ -35,13 +35,13 @@ def fetch_anime(query):
 		aEntry = aData['data'][0]
 	except IndexError:
 		return "No results found."
-	title = aEntry['attributes'].get('canonicalTitle', 'Unknown')
-	enTitle = aEntry['attributes']['titles'].get('en', 'Unknown')
-	status = aEntry['attributes'].get('status', 'Unknown')
-	count = aEntry['attributes'].get('episodeCount', 'Unknown')
-	date = aEntry['attributes'].get('startDate', 'None')[:4]
-	slug = aEntry['attributes'].get('slug', 'Unknown')
-	synopsis = aEntry['attributes'].get('synopsis', 'Unknown')[:250]
+	title = aEntry['attributes']['canonicalTitle', 'Unknown']
+	enTitle = aEntry['attributes']['titles']['en', 'Unknown']
+	status = aEntry['attributes']['status', 'Unknown']
+	count = aEntry['attributes']['episodeCount', 'Unknown']
+	date = aEntry['attributes']['startDate', 'None'][:4]
+	slug = aEntry['attributes']['slug', 'Unknown']
+	synopsis = aEntry['attributes']['synopsis', 'Unknown'][:250]
 	return "{title} ({enTitle}) - {status} - {count} Episodes - Aired: {date} - https://kitsu.io/anime/{slug} - Synopsis: {synopsis}...".format(title=title, enTitle=enTitle, status=status, count=count, date=date, slug=slug, synopsis=synopsis)
 @commands('ku')
 def ku(bot, trigger):
@@ -73,7 +73,9 @@ def fetch_user(query):
 	except IndexError:
 		return "No results found."
 	uid = uEntry['id']
-	userName = uEntry['attributes'].get('name', 'Unknown')
+	slug = uEntry['attributes']['slug']
+	userName = uEntry['attributes']['name']
+	waifuOrHusbando = uEntry['attributes']['waifuOrHusbando']
 	waifuLink = api + 'users/' + uid + '/waifu'
 	statsLink = api + 'users/' + uid + sFilter
 	libraryLink = api + 'users/' + uid + lFilter
@@ -89,7 +91,7 @@ def fetch_user(query):
 		sEntry = sData['data'][0]
 	except IndexError:
 		return "No stats found."
-	lwoa = sEntry['attributes']['statsData'].get('time', 'None!')
+	lwoa = sEntry['attributes']['statsData']['time']
 	try:
 		library = requests.get(libraryLink)
 	except IndexError:
@@ -98,12 +100,12 @@ def fetch_user(query):
 		lData = library.json()
 	except ValueError:
 		return library.content
-	a0Name = lData['included'][0]['attributes'].get('canonicalTitle', 'None!')
-	a1Name = lData['included'][1]['attributes'].get('canonicalTitle', 'None!')
-	a2Name = lData['included'][2]['attributes'].get('canonicalTitle', 'None!')
-	a0Prog = lData['data'][0]['attributes'].get('progress', 'None!')
-	a1Prog = lData['data'][1]['attributes'].get('progress', 'None!')
-	a2Prog = lData['data'][2]['attributes'].get('progress', 'None!')
+	a0Name = lData['included'][0]['attributes']['canonicalTitle']
+	a1Name = lData['included'][1]['attributes']['canonicalTitle']
+	a2Name = lData['included'][2]['attributes']['canonicalTitle']
+	a0Prog = lData['data'][0]['attributes']['progress']
+	a1Prog = lData['data'][1]['attributes']['progress']
+	a2Prog = lData['data'][2]['attributes']['progress']
 	try:
 		waifus = requests.get(waifuLink)
 	except IndexError:
@@ -116,5 +118,5 @@ def fetch_user(query):
 		wEntry = wData['data']
 	except IndexError:
 		return "No waifus found."
-	waifu = wEntry['attributes'].get('name', 'None Set!')
-	return "{userName} - Waifu: {waifu} - Life Wasted On Anime: {lwoa} minutes - https://kitsu.io/users/{uid} - Last Updated: {a0Name} to {a0Prog}, {a1Name} to {a1Prog} and {a2Name} to {a2Prog}".format(userName=userName, waifu=waifu, lwoa=lwoa, uid=uid, a0Name=a0Name, a1Name=a1Name, a2Name=a2Name, a0Prog=a0Prog, a1Prog=a1Prog, a2Prog=a2Prog)
+	waifu = wEntry['attributes']['name']
+	return "{userName} - {waifuOrHusbando}: {waifu} - Life Wasted On Anime: {lwoa} minutes - https://kitsu.io/users/{slug} - Last Updated: {a0Name} to {a0Prog}, {a1Name} to {a1Prog} and {a2Name} to {a2Prog}".format(userName=userName, waifu=waifu, slug=slug, waifuOrHusbando=waifuOrHusbando, lwoa=lwoa, uid=uid, a0Name=a0Name, a1Name=a1Name, a2Name=a2Name, a0Prog=a0Prog, a1Prog=a1Prog, a2Prog=a2Prog)
