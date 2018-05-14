@@ -78,26 +78,29 @@ def fetch_user(query):
 	userName = uEntry['attributes']['name']
 #	waifu section
 	waifuOrHusbando = uEntry['attributes'].get('waifuOrHusbando')
-	waifuLink = api + 'users/' + uid + '/waifu'
-	try:
-		waifus = requests.get(waifuLink)
-	except IndexError:
-		return "No waifus found."
-	try:
-		wData = waifus.json()
-	except ValueError:
-		return waifus.content
-	try:
-		wEntry = wData['data']
-	except IndexError:
-		return "No waifus found."
-	waifu = wEntry['attributes']['name']
+	if waifuOrHusbando:
+		waifuLink = api + 'users/' + uid + '/waifu'
+		try:
+			waifus = requests.get(waifuLink)
+		except IndexError:
+			return
+		try:
+			wData = waifus.json()
+		except ValueError:
+			return waifus.content
+		try:
+			wEntry = wData['data']
+		except IndexError:
+			return
+		waifu = wEntry['attributes'].get('name')
+	else:
+		waifu = 'No waifu set!'
 #	stats section
 	statsLink = api + 'users/' + uid + sFilter
 	try:
 		stats = requests.get(statsLink)
 	except IndexError:
-		return "No stats found."
+		return
 	try:
 		sData = stats.json()
 	except ValueError:
@@ -105,14 +108,14 @@ def fetch_user(query):
 	try:
 		sEntry = sData['data'][0]
 	except IndexError:
-		return "No stats found."
+		return
 	lwoa = sEntry['attributes']['statsData']['time']
 #	library section
 	libraryLink = api + 'users/' + uid + lFilter
 	try:
 		library = requests.get(libraryLink)
 	except IndexError:
-		return "No libraries found."
+		return
 	try:
 		lData = library.json()
 	except ValueError:
@@ -124,7 +127,4 @@ def fetch_user(query):
 	a1Prog = lData['data'][1]['attributes']['progress']
 	a2Prog = lData['data'][2]['attributes']['progress']
 #	results output
-	if waifu:
-		return "{userName} - {waifuOrHusbando}: {waifu} - Life Wasted On Anime: {lwoa} minutes - https://kitsu.io/users/{slug} - Last Updated: {a0Name} to {a0Prog}, {a1Name} to {a1Prog} and {a2Name} to {a2Prog}".format(userName=userName, waifu=waifu, slug=slug, waifuOrHusbando=waifuOrHusbando, lwoa=lwoa, uid=uid, a0Name=a0Name, a1Name=a1Name, a2Name=a2Name, a0Prog=a0Prog, a1Prog=a1Prog, a2Prog=a2Prog)
-	else:
-		return "{userName} - {waifuOrHusbando} - Life Wasted On Anime: {lwoa} minutes - https://kitsu.io/users/{slug} - Last Updated: {a0Name} to {a0Prog}, {a1Name} to {a1Prog} and {a2Name} to {a2Prog}".format(userName=userName, slug=slug, waifuOrHusbando=waifuOrHusbando, lwoa=lwoa, uid=uid, a0Name=a0Name, a1Name=a1Name, a2Name=a2Name, a0Prog=a0Prog, a1Prog=a1Prog, a2Prog=a2Prog)
+	return "{userName} - {waifuOrHusbando}: {waifu} - Life Wasted On Anime: {lwoa} minutes - https://kitsu.io/users/{slug} - Last Updated: {a0Name} to {a0Prog}, {a1Name} to {a1Prog} and {a2Name} to {a2Prog}".format(userName=userName, waifu=waifu, slug=slug, waifuOrHusbando=waifuOrHusbando, lwoa=lwoa, uid=uid, a0Name=a0Name, a1Name=a1Name, a2Name=a2Name, a0Prog=a0Prog, a1Prog=a1Prog, a2Prog=a2Prog)
