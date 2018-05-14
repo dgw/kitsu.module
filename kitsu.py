@@ -35,13 +35,13 @@ def fetch_anime(query):
 		aEntry = aData['data'][0]
 	except IndexError:
 		return "No results found."
-	title = aEntry['attributes']['canonicalTitle', 'Unknown']
-	enTitle = aEntry['attributes']['titles']['en', 'Unknown']
-	status = aEntry['attributes']['status', 'Unknown']
-	count = aEntry['attributes']['episodeCount', 'Unknown']
-	date = aEntry['attributes']['startDate', 'None'][:4]
-	slug = aEntry['attributes']['slug', 'Unknown']
-	synopsis = aEntry['attributes']['synopsis', 'Unknown'][:250]
+	title = aEntry['attributes']['canonicalTitle']
+	enTitle = aEntry['attributes']['titles']['en']
+	status = aEntry['attributes']['status']
+	count = aEntry['attributes']['episodeCount']
+	date = aEntry['attributes']['startDate'][:4]
+	slug = aEntry['attributes']['slug']
+	synopsis = aEntry['attributes']['synopsis'][:250]
 	return "{title} ({enTitle}) - {status} - {count} Episodes - Aired: {date} - https://kitsu.io/anime/{slug} - Synopsis: {synopsis}...".format(title=title, enTitle=enTitle, status=status, count=count, date=date, slug=slug, synopsis=synopsis)
 @commands('ku')
 def ku(bot, trigger):
