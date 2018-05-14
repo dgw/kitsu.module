@@ -77,7 +77,7 @@ def fetch_user(query):
 	slug = uEntry['attributes']['slug']
 	userName = uEntry['attributes']['name']
 #	waifu section
-	waifuOrHusbando = uEntry['attributes']['waifuOrHusbando']
+	waifuOrHusbando = uEntry['attributes'].get('waifuOrHusbando')
 	waifuLink = api + 'users/' + uid + '/waifu'
 	try:
 		waifus = requests.get(waifuLink)
