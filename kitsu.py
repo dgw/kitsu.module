@@ -29,8 +29,6 @@ def fetch_anime(query):
 		aData = anime.json()
 	except ValueError:
 		return anime.content
-#	if data['meta']['count'] = 0:
-#		return "No results found."
 	try:
 		aEntry = aData['data'][0]
 	except IndexError:
@@ -67,8 +65,6 @@ def fetch_user(query):
 		uData = user.json()
 	except ValueError:
 		return user.content
-#	if data['meta']['count'] = 0:
-#		return "No results found."
 	try:
 		uEntry = uData['data'][0]
 	except IndexError:
@@ -94,7 +90,7 @@ def fetch_user(query):
 			return
 		waifu = wEntry['attributes'].get('name')
 	else:
-		waifu = 'No waifu set!'
+		waifu = 'Not set!'
 #	stats section
 	statsLink = api + 'users/' + uid + sFilter
 	try:
@@ -109,7 +105,7 @@ def fetch_user(query):
 		sEntry = sData['data'][0]
 	except IndexError:
 		return
-	lwoa = sEntry['attributes']['statsData']['time']
+	lwoa = sEntry['attributes']['statsData'].get('time')
 #	library section
 	libraryLink = api + 'users/' + uid + lFilter
 	try:
@@ -120,11 +116,11 @@ def fetch_user(query):
 		lData = library.json()
 	except ValueError:
 		return library.content
-	a0Name = lData['included'][0]['attributes']['canonicalTitle']
-	a1Name = lData['included'][1]['attributes']['canonicalTitle']
-	a2Name = lData['included'][2]['attributes']['canonicalTitle']
-	a0Prog = lData['data'][0]['attributes']['progress']
-	a1Prog = lData['data'][1]['attributes']['progress']
-	a2Prog = lData['data'][2]['attributes']['progress']
+	a0Name = lData['included'][0]['attributes'].get('canonicalTitle','None')
+	a1Name = lData['included'][1]['attributes'].get('canonicalTitle','None')
+	a2Name = lData['included'][2]['attributes'].get('canonicalTitle','None')
+	a0Prog = lData['data'][0]['attributes'].get('progress','None')
+	a1Prog = lData['data'][1]['attributes'].get('progress','None')
+	a2Prog = lData['data'][2]['attributes'].get('progress','None')
 #	results output
 	return "{userName} - {waifuOrHusbando}: {waifu} - Life Wasted On Anime: {lwoa} minutes - https://kitsu.io/users/{slug} - Last Updated: {a0Name} to {a0Prog}, {a1Name} to {a1Prog} and {a2Name} to {a2Prog}".format(userName=userName, waifu=waifu, slug=slug, waifuOrHusbando=waifuOrHusbando, lwoa=lwoa, uid=uid, a0Name=a0Name, a1Name=a1Name, a2Name=a2Name, a0Prog=a0Prog, a1Prog=a1Prog, a2Prog=a2Prog)
