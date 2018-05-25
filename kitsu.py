@@ -1,5 +1,6 @@
 from sopel.module import commands, example
 import requests
+from slugify import slugify
 api = 'https://kitsu.io/api/edge/'
 aFilter = 'anime?page[limit]=5&filter[text]=%s'
 uFilter = 'users?include=waifu&fields[users]=name,waifuOrHusbando,slug&fields[characters]=canonicalName&page[limit]=1&filter[name]=%s'
@@ -9,6 +10,7 @@ lFilter = '/library-entries?page[limit]=3&sort=-progressedAt,updatedAt&include=m
 @example('.ka Clannad')
 def ka(bot, trigger):
 	query = trigger.group(2) or None
+	query = slugify(query)
 	bot.say("[Kitsu] %s" % fetch_anime(query))
 def fetch_anime(query):
 	if not query:
@@ -105,7 +107,7 @@ def fetch_user(query):
 		sEntry = sData['data'][0]
 	except IndexError:
 		return
-	lwoa = sEntry['attributes']['statsData'].get('time')
+	lwoa = sEntry['attributes']['statsData'].get('time','None')
 #	library section
 	libraryLink = api + 'users/' + uid + lFilter
 	try:
