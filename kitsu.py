@@ -6,6 +6,7 @@ aFilter = 'anime?page[limit]=5&filter[text]=%s'
 uFilter = 'users?include=waifu&fields[users]=name,waifuOrHusbando,slug&fields[characters]=canonicalName&page[limit]=1&filter[name]=%s'
 sFilter = '/stats?filter[kind]=anime-amount-consumed'
 lFilter = '/library-entries?page[limit]=3&sort=-progressedAt,updatedAt&include=media&fields[libraryEntries]=status,progress'
+##	anime section
 @commands('ka')
 @example('.ka Clannad')
 def ka(bot, trigger):
@@ -22,7 +23,7 @@ def fetch_anime(query):
 	except requests.exceptions.ConnectionError:
 		return "Could not connect to server."
 	except requests.exceptions.ReadTimeout:
-		return "Server took too long to send results."
+		return "Server took too long to reply."
 	try:
 		anime.raise_for_status()
 	except requests.exceptions.HTTPError as e:
@@ -36,13 +37,18 @@ def fetch_anime(query):
 	except IndexError:
 		return "No results found."
 	title = aEntry['attributes'].get('canonicalTitle','None')
-	enTitle = aEntry['attributes']['titles'].get('en','No English Title')
+	enTitle = aEntry['attributes']['titles'].get('en',None)
+	if enTitle:
+		title += ' ({enTitle})'.format(enTitle=enTitle)
 	status = aEntry['attributes'].get('status','Unknown')
+	subtype = aEntry['attributes'].get('subtype',None)
 	count = aEntry['attributes'].get('episodeCount','Unknown')
 	date = aEntry['attributes'].get('startDate','Unknown')[:4]
-	slug = aEntry['attributes'].get('slug','None')
-	synopsis = aEntry['attributes'].get('synopsis','None')[:250]
-	return "{title} ({enTitle}) - {status} - Episodes: {count} - Aired: {date} - https://kitsu.io/anime/{slug} - Synopsis: {synopsis}...".format(title=title, enTitle=enTitle, status=status, count=count, date=date, slug=slug, synopsis=synopsis)
+	slug = aEntry['attributes'].get('slug',None)
+	synopsis = aEntry['attributes'].get('synopsis','None found.')[:250]
+#	results output
+	return "[{subtype}] {title} - {status} - Episodes: {count} - Aired: {date} - https://kitsu.io/anime/{slug} - Synopsis: {synopsis}...".format(subtype=subtype, title=title, status=status, count=count, date=date, slug=slug, synopsis=synopsis)
+#	user section
 @commands('ku')
 def ku(bot, trigger):
 	query = trigger.group(2) or None
@@ -50,7 +56,6 @@ def ku(bot, trigger):
 def fetch_user(query):
 	if not query:
 		return "No search query provided."
-#	user section
 	try:
 		user = requests.get(api + uFilter % query, timeout=(10.0, 4.0))
 	except requests.exceptions.ConnectTimeout:
