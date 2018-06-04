@@ -1,18 +1,21 @@
+##	python modules
 from sopel.module import commands, example
 import requests
 from slugify import slugify
+##
 api = 'https://kitsu.io/api/edge/'
 aFilter = 'anime?page[limit]=5&filter[text]=%s'
 uFilter = 'users?include=waifu&fields[users]=name,waifuOrHusbando,slug&fields[characters]=canonicalName&page[limit]=1&filter[name]=%s'
 sFilter = '/stats?filter[kind]=anime-amount-consumed'
-lFilter = '/library-entries?page[limit]=3&sort=-progressedAt,updatedAt&include=media&fields[libraryEntries]=status,progress'
-##	anime section
+lFilter = '/library-entries?page[limit]=3&sort=-progressedAt,updatedAt&include=media&fields[libraryEntries]=status,progress&fields[anime]=canonicalTitle&fields[manga]=canonicalTitle'
+##	anime search trigger
 @commands('ka')
 @example('.ka Clannad')
 def ka(bot, trigger):
 	query = trigger.group(2) or None
 	query = slugify(query)
 	bot.say("[Kitsu] %s" % fetch_anime(query))
+##	anime search query
 def fetch_anime(query):
 	if not query:
 		return "No search query provided."
@@ -46,13 +49,14 @@ def fetch_anime(query):
 	date = aEntry['attributes'].get('startDate','Unknown')[:4]
 	slug = aEntry['attributes'].get('slug',None)
 	synopsis = aEntry['attributes'].get('synopsis','None found.')[:250]
-#	results output
+##	anime search results output
 	return "[{subtype}] {title} - {status} - Episodes: {count} - Aired: {date} - https://kitsu.io/anime/{slug} - Synopsis: {synopsis}...".format(subtype=subtype, title=title, status=status, count=count, date=date, slug=slug, synopsis=synopsis)
-#	user section
+##	user search trigger
 @commands('ku')
 def ku(bot, trigger):
 	query = trigger.group(2) or None
 	bot.say("[Kitsu] %s" % fetch_user(query))
+##	user search query
 def fetch_user(query):
 	if not query:
 		return "No search query provided."
@@ -79,31 +83,15 @@ def fetch_user(query):
 	uid = uEntry['id']
 	slug = uEntry['attributes']['slug']
 	userName = uEntry['attributes']['name']
-#	waifu section
+##	waifu logic
 	waifuOrHusbando = uEntry['attributes'].get('waifuOrHusbando')
 	if waifuOrHusbando:
-		waifuLink = api + 'users/' + uid + '/waifu'
-		try:
-			waifus = requests.get(waifuLink)
-		except IndexError:
-			return
-		try:
-			wData = waifus.json()
-		except ValueError:
-			return waifus.content
-		try:
-			wEntry = wData['data']
-		except IndexError:
-			return
-		waifu = wEntry['attributes'].get('name')
+		waifu = uData['included'][0]['attributes'].get('canonicalName')
 	else:
 		waifu = 'Not set!'
-#	stats section
+##	stats logic
 	statsLink = api + 'users/' + uid + sFilter
-	try:
-		stats = requests.get(statsLink)
-	except IndexError:
-		return
+	stats = requests.get(statsLink)
 	try:
 		sData = stats.json()
 	except ValueError:
@@ -111,23 +99,23 @@ def fetch_user(query):
 	try:
 		sEntry = sData['data'][0]
 	except IndexError:
-		return
-	lwoa = sEntry['attributes']['statsData'].get('time','None')
-#	library section
+		return "No library data found for this user."
+	lwoa = sEntry['attributes']['statsData'].get('time')
+##	library logic
 	libraryLink = api + 'users/' + uid + lFilter
-	try:
-		library = requests.get(libraryLink)
-	except IndexError:
-		return
-	try:
-		lData = library.json()
-	except ValueError:
-		return library.content
-	a0Name = lData['included'][0]['attributes'].get('canonicalTitle','None')
-	a1Name = lData['included'][1]['attributes'].get('canonicalTitle','None')
-	a2Name = lData['included'][2]['attributes'].get('canonicalTitle','None')
-	a0Prog = lData['data'][0]['attributes'].get('progress','None')
-	a1Prog = lData['data'][1]['attributes'].get('progress','None')
-	a2Prog = lData['data'][2]['attributes'].get('progress','None')
-#	results output
-	return "{userName} - {waifuOrHusbando}: {waifu} - Life Wasted On Anime: {lwoa} minutes - https://kitsu.io/users/{slug} - Last Updated: {a0Name} to {a0Prog}, {a1Name} to {a1Prog} and {a2Name} to {a2Prog}".format(userName=userName, waifu=waifu, slug=slug, waifuOrHusbando=waifuOrHusbando, lwoa=lwoa, uid=uid, a0Name=a0Name, a1Name=a1Name, a2Name=a2Name, a0Prog=a0Prog, a1Prog=a1Prog, a2Prog=a2Prog)
+	library = requests.get(libraryLink)
+	lData = library.json()
+	l0Name = lData['included'][0]['attributes'].get('canonicalTitle',None)
+	if l0Name:
+		l0Prog = lData['data'][0]['attributes'].get('progress')
+		slug += ' - Last Updated: {l0Name} to {l0Prog}'.format(l0Name=l0Name, l0Prog=l0Prog)
+	l1Name = lData['included'][1]['attributes'].get('canonicalTitle',None)
+	if l1Name:
+		l1Prog = lData['data'][1]['attributes'].get('progress')
+		slug += ', {l1Name} to {l1Prog}'.format(l1Name=l1Name, l1Prog=l1Prog)
+	l2Name = lData['included'][2]['attributes'].get('canonicalTitle',None)
+	if l2Name:
+		l2Prog = lData['data'][2]['attributes'].get('progress')
+		slug += ', {l2Name} to {l2Prog}'.format(l2Name=l2Name, l2Prog=l2Prog)
+##	user search results output
+	return "{userName} - {waifuOrHusbando}: {waifu} - Life Wasted On Anime: {lwoa} minutes - https://kitsu.io/users/{slug}".format(userName=userName, waifu=waifu, slug=slug, waifuOrHusbando=waifuOrHusbando, lwoa=lwoa, uid=uid)
