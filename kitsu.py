@@ -4,10 +4,11 @@ import requests
 from slugify import slugify
 ##
 api = 'https://kitsu.io/api/edge/'
-aFilter = 'anime?page[limit]=5&filter[text]=%s'
+aFilter = 'anime?page[limit]=5&fields[anime]=canonicalTitle,titles,subtype,status,episodeCount,startDate,slug,synopsis,averageRating&filter[subtype]=tv,movie,ova,ona,special&filter[text]=%s'
 uFilter = 'users?include=waifu&fields[users]=name,waifuOrHusbando,slug&fields[characters]=canonicalName&page[limit]=1&filter[name]=%s'
 sFilter = '/stats?filter[kind]=anime-amount-consumed'
 lFilter = '/library-entries?page[limit]=3&sort=-progressedAt,updatedAt&include=media&fields[libraryEntries]=status,progress&fields[anime]=canonicalTitle&fields[manga]=canonicalTitle'
+cFilter = 'characters?fields[characters]=slug,name,description&page[limit]=1&filter[name]=%s'
 ##	anime search trigger
 @commands('ka')
 @example('.ka Clannad')
@@ -32,27 +33,29 @@ def fetch_anime(query):
 	except requests.exceptions.HTTPError as e:
 		return "HTTP error: " + e.message
 	try:
-		aData = anime.json()
+		Data = anime.json()
 	except ValueError:
 		return anime.content
 	try:
-		aEntry = aData['data'][0]
+		Entry = Data['data'][0]
 	except IndexError:
 		return "No results found."
-	title = aEntry['attributes'].get('canonicalTitle','None')
-	enTitle = aEntry['attributes']['titles'].get('en',None)
+	title = Entry['attributes'].get('canonicalTitle','None')
+	enTitle = Entry['attributes']['titles'].get('en',None)
 	if enTitle:
 		title += ' ({enTitle})'.format(enTitle=enTitle)
-	status = aEntry['attributes'].get('status','Unknown')
-	subtype = aEntry['attributes'].get('subtype',None)
-	count = aEntry['attributes'].get('episodeCount','Unknown')
-	date = aEntry['attributes'].get('startDate','Unknown')[:4]
-	slug = aEntry['attributes'].get('slug',None)
-	synopsis = aEntry['attributes'].get('synopsis','None found.')[:250]
+	status = Entry['attributes'].get('status','Unknown')
+	subtype = Entry['attributes'].get('subtype',None)
+	count = Entry['attributes'].get('episodeCount','Unknown')
+	date = Entry['attributes'].get('startDate','Unknown')[:4]
+	slug = Entry['attributes'].get('slug',None)
+	rating = Entry['attributes'].get('averageRating')
+	synopsis = Entry['attributes'].get('synopsis','None found.')[:200]
 ##	anime search results output
-	return "[{subtype}] {title} - {status} - Episodes: {count} - Aired: {date} - https://kitsu.io/anime/{slug} - Synopsis: {synopsis}...".format(subtype=subtype, title=title, status=status, count=count, date=date, slug=slug, synopsis=synopsis)
+	return "{title} [{subtype}] - Score: {rating}% - {status} - Episodes: {count} - Aired: {date} - https://kitsu.io/anime/{slug} - Synopsis: {synopsis}...".format(title=title, subtype=subtype.upper(), rating=rating, status=status.title(), count=count, date=date, slug=slug, synopsis=synopsis)
 ##	user search trigger
 @commands('ku')
+@example('.ku SleepingPanda')
 def ku(bot, trigger):
 	query = trigger.group(2) or None
 	bot.say("[Kitsu] %s" % fetch_user(query))
@@ -99,7 +102,7 @@ def fetch_user(query):
 	try:
 		sEntry = sData['data'][0]
 	except IndexError:
-		return "No library data found for this user."
+		return "No stats found for this user."
 	lwoa = sEntry['attributes']['statsData'].get('time')
 ##	library logic
 	libraryLink = api + 'users/' + uid + lFilter
@@ -108,7 +111,7 @@ def fetch_user(query):
 	l0Name = lData['included'][0]['attributes'].get('canonicalTitle',None)
 	if l0Name:
 		l0Prog = lData['data'][0]['attributes'].get('progress')
-		slug += ' - Last Updated: {l0Name} to {l0Prog}'.format(l0Name=l0Name, l0Prog=l0Prog)
+		slug += '. Last Updated: {l0Name} to {l0Prog}'.format(l0Name=l0Name, l0Prog=l0Prog)
 	l1Name = lData['included'][1]['attributes'].get('canonicalTitle',None)
 	if l1Name:
 		l1Prog = lData['data'][1]['attributes'].get('progress')
@@ -118,4 +121,39 @@ def fetch_user(query):
 		l2Prog = lData['data'][2]['attributes'].get('progress')
 		slug += ', {l2Name} to {l2Prog}'.format(l2Name=l2Name, l2Prog=l2Prog)
 ##	user search results output
-	return "{userName} - {waifuOrHusbando}: {waifu} - Life Wasted On Anime: {lwoa} minutes - https://kitsu.io/users/{slug}".format(userName=userName, waifu=waifu, slug=slug, waifuOrHusbando=waifuOrHusbando, lwoa=lwoa, uid=uid)
+	return "{userName}'s {waifuOrHusbando} is {waifu}, and they have wasted {lwoa} minutes of their life on Japanese cartoons. Tell {userName} how much of a weeb they are at https://kitsu.io/users/{slug}.".format(userName=userName, waifuOrHusbando=waifuOrHusbando.lower(), waifu=waifu, lwoa=lwoa, slug=slug)
+## character search trigger
+@commands('kc')
+@example('.kc Son Goku')
+def kc(bot, trigger):
+	query = trigger.group(2) or None
+	query = slugify(query)
+	bot.say("[Kitsu] %s" % fetch_character(query))
+##	character search query
+def fetch_character(query):
+	if not query:
+		return "No search query provided."
+	try:
+		character = requests.get(api + cFilter % query, timeout=(10.0, 4.0))
+	except requests.exceptions.ConnectTimeout:
+		return "Connection timed out."
+	except requests.exceptions.ConnectionError:
+		return "Could not connect to server."
+	except requests.exceptions.ReadTimeout:
+		return "Server took too long to reply."
+	try:
+		character.raise_for_status()
+	except requests.exceptions.HTTPError as e:
+		return "HTTP error: " + e.message
+	try:
+		Data = character.json()
+	except ValueError:
+		return character.content
+	try:
+		Entry = Data['data'][0]
+	except IndexError:
+		return "No results found."
+	name = Entry['attributes'].get('name')
+	description = Entry['attributes'].get('description')[:250]
+##	character search results output
+	return "{name} - Description: {description}...".format(name=name, description=description)
