@@ -99,7 +99,8 @@ def fetch_user(query):
 	if waifuOrHusbando:
 		waifu = uData['included'][0]['attributes'].get('canonicalName')
 	else:
-		waifu = 'Not set!'
+		waifuOrHusbando = 'waifu'
+		waifu = 'not set!'
 ##	stats logic
 	statsLink = api + 'users/' + uid + sFilter
 	stats = requests.get(statsLink)
