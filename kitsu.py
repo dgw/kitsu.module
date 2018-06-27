@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 from sopel.module import commands, example
 import requests
+import bleach
 from slugify import slugify
 ##	global variables
 api = 'https://kitsu.io/api/edge/'
@@ -52,12 +53,14 @@ def fetch_anime(query):
 		slug = Entry['attributes'].get('slug')
 		rating = Entry['attributes'].get('averageRating')
 		synopsis = Entry['attributes'].get('synopsis','None found.')[:150]
-		included = Data.get('included')
-		genre = [each['attributes']['name'] for each in included if each['type'] == 'genres']
+		included = Data.get('included',None)
+		if included:
+			genre = [each['attributes']['name'] for each in included if each['type'] == 'genres']
+			slug += ' - Genres: {genre}'.format(genre=', '.join(genre + [" & ".join(genre)]))
 	except IndexError:
 		return "No results found."
 ##	anime search results output
-	return "{title} [{subtype}] - Score: {rating}% - {status} - Episodes: {count} - Aired: {date} - https://kitsu.io/anime/{slug} - Genres: {genre}. Synopsis: {synopsis}...".format(title=title, subtype=submaps[subtype], rating=rating, genre=', '.join(genre + [" & ".join(genre)]), status=statmaps[status], count=count, date=date, slug=slug, synopsis=synopsis)
+	return "{title} [{subtype}] - Score: {rating}% - {status} - Episodes: {count} - Aired: {date} - https://kitsu.io/anime/{slug}. Synopsis: {synopsis}...".format(title=title, subtype=submaps[subtype], rating=rating, status=statmaps[status], count=count, date=date, slug=slug, synopsis=synopsis)
 ##	user search trigger
 @commands('ku')
 @example('.ku SleepingPanda')
@@ -156,7 +159,7 @@ def fetch_character(query):
 	try:
 		Entry = Data['data'][0]
 		name = Entry['attributes'].get('name')
-		description = Entry['attributes'].get('description')[:250]
+		description = bleach.clean(Entry['attributes'].get('description')[:250], strip=True)
 	except IndexError:
 		return "No results found."
 ##	character search results output
