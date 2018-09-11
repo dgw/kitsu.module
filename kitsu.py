@@ -1,12 +1,13 @@
 ##	python modules
 from __future__ import unicode_literals
 from sopel.module import commands, example
+from sopel import web
+from slugify import slugify
 import requests
 import bleach
-from slugify import slugify
 ##	global variables
 api = 'https://kitsu.io/api/edge/'
-aFilter = 'anime?page[limit]=1&include=genres&filter[subtype]=tv,movie,ova,ona,special&fields[anime]=canonicalTitle,titles,subtype,episodeCount,startDate,slug,synopsis,averageRating,status&fields[genres]=name&filter[text]=%s'
+aFilter = 'anime?page[limit]=1&page[offset]=0&include=genres,animeProductions.producer,castings.person&filter[subtype]=tv,movie,ova,ona,special&fields[anime]=canonicalTitle,titles,subtype,episodeCount,startDate,slug,synopsis,averageRating,status&fields[animeProductions]=producer,role&fields[castings]=voiceActor,featured,language,person&fields[genres]=name&fields[producers]=name&filter[text]=%s'
 uFilter = 'users?include=waifu&fields[users]=name,waifuOrHusbando,slug&fields[characters]=canonicalName&page[limit]=1&filter[name]=%s'
 sFilter = '/stats?filter[kind]=anime-amount-consumed'
 lFilter = '/library-entries?page[limit]=3&sort=-progressedAt,updatedAt&include=media&fields[libraryEntries]=status,progress&fields[anime]=canonicalTitle&fields[manga]=canonicalTitle'
@@ -17,13 +18,13 @@ cFilter = 'characters?fields[characters]=slug,name,description&page[limit]=1&fil
 def ka(bot, trigger):
 	query = trigger.group(2) or None
 	query = slugify(query)
-	bot.say("[Kitsu] %s" % fetch_anime(query))
+	bot.say("%s" % fetch_anime(query))
 ##	anime search query
 def fetch_anime(query):
 	if not query:
 		return "No search query provided."
 	try:
-		anime = requests.get(api + aFilter % query, timeout=(10.0, 4.0))
+		anime = requests.get(api + aFilter % query, timeout=(15.0, 10.0))
 	except requests.exceptions.ConnectTimeout:
 		return "Connection timed out."
 	except requests.exceptions.ConnectionError:
@@ -52,21 +53,41 @@ def fetch_anime(query):
 		date = Entry['attributes'].get('startDate','Unknown')[:4]
 		slug = Entry['attributes'].get('slug')
 		rating = Entry['attributes'].get('averageRating')
-		synopsis = Entry['attributes'].get('synopsis','None found.')[:150]
-		included = Data.get('included',None)
-		if included:
-			genre = [each['attributes']['name'] for each in included if each['type'] == 'genres']
-			slug += ' - Genres: {genre}'.format(genre=', '.join(genre + [" & ".join(genre)]))
+		synopsis = Entry['attributes'].get('synopsis','None found.')[:140]
 	except IndexError:
 		return "No results found."
+	try:
+		included = Data.get('included')
+	except IndexError:
+		return
+	try:
+		genre = [each['attributes']['name'] for each in included if each['type'] == 'genres']
+	except IndexError:
+		return
+	try:
+		studioID = [each['relationships']['producer']['data']['id'] for each in included if each['attributes'].get('role') == 'studio']
+	except IndexError:
+		return
+	try:
+		studioName = list(set([each['attributes']['name'] for each in included if each['id'] in studioID]))
+	except IndexError:
+		return
+	try:
+		vaID = list(set([each['relationships']['person']['data']['id'] for each in included if each['attributes'].get('voiceActor') and each['attributes'].get('featured') and each['attributes'].get('language') == 'Japanese']))
+	except IndexError:
+		return
+	try:
+		vaName = list(set([each['attributes']['name'] for each in included if each['id'] in vaID]))
+	except IndexError:
+		return
 ##	anime search results output
-	return "{title} [{subtype}] - Score: {rating}% - {status} - Episodes: {count} - Aired: {date} - https://kitsu.io/anime/{slug}. Synopsis: {synopsis}...".format(title=title, subtype=submaps[subtype], rating=rating, status=statmaps[status], count=count, date=date, slug=slug, synopsis=synopsis)
+	return "{title} ({date}) | {subtype} | Studio: {studioName} | Score: {rating}% | {status} | Episodes: {count} | https://kitsu.io/anime/{slug} | Genres: {genre} | VA: {vaName} | Synopsis: {synopsis}..".format(title=title, date=date, subtype=submaps[subtype], studioName=", ".join(studioName[:-2] + [" & ".join(studioName[-2:])]), rating=rating, status=statmaps[status], count=count, slug=slug, genre=", ".join(genre[:-2] + [" & ".join(genre[-2:])]), vaName=", ".join(vaName[:-2] + [" & ".join(vaName[-2:])]), synopsis=synopsis.replace("\n", " "))
 ##	user search trigger
 @commands('ku')
 @example('.ku SleepingPanda')
 def ku(bot, trigger):
 	query = trigger.group(2) or None
-	bot.say("[Kitsu] %s" % fetch_user(query))
+	bot.say("%s" % fetch_user(query))
 ##	user search query
 def fetch_user(query):
 	if not query:
@@ -99,8 +120,7 @@ def fetch_user(query):
 	if waifuOrHusbando:
 		waifu = uData['included'][0]['attributes'].get('canonicalName')
 	else:
-		waifuOrHusbando = 'waifu'
-		waifu = 'not set!'
+		waifu = 'Not set!'
 ##	stats logic
 	statsLink = api + 'users/' + uid + sFilter
 	stats = requests.get(statsLink)
@@ -136,7 +156,7 @@ def fetch_user(query):
 def kc(bot, trigger):
 	query = trigger.group(2) or None
 	query = slugify(query)
-	bot.say("[Kitsu] %s" % fetch_character(query))
+	bot.say("%s" % fetch_character(query))
 ##	character search query
 def fetch_character(query):
 	if not query:
@@ -160,7 +180,7 @@ def fetch_character(query):
 	try:
 		Entry = Data['data'][0]
 		name = Entry['attributes'].get('name')
-		description = bleach.clean(Entry['attributes'].get('description')[:250], strip=True)
+		description = web.decode(bleach.clean(Entry['attributes'].get('description')[:250].replace('<br/>', ' '), strip=True))
 	except IndexError:
 		return "No results found."
 ##	character search results output
