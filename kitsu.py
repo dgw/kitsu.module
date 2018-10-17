@@ -92,7 +92,7 @@ def fetch_anime(query):
 	except IndexError:
 		return
 ##	anime search results output
-	return "{title} ({date}) | {subtype} | Studio: {studioName} | Score: {rating} | {status} | Eps: {count} | https://kitsu.io/anime/{slug} | Genre{genreplural}: {genre} | VA: {vaName} | Synopsis: {synopsis}".format(title=title, date=date, subtype=submaps[subtype], studioName=", ".join(studioName[:-2] + [" & ".join(studioName[-2:])]), rating=rating, status=statmaps[status], count=count, slug=slug, genreplural=('' if len(genre) == 1 else 's'), genre=", ".join(genre[:-2] + [" & ".join(genre[-2:])]), vaName=", ".join(vaName[:-2] + [" & ".join(vaName[-2:])]), synopsis=synopsis.replace("\n", " "))
+	return "{title} ({date}) | {subtype} | Studio: {studioName} | Score: {rating} | {status} | Eps: {count} | https://kitsu.io/anime/{slug} | Genre{genreplural}: {genre} | VA: {vaName} | Synopsis: {synopsis}".format(title=title, date=date, subtype=submaps[subtype], studioName=", ".join(studioName[:-2] + [" & ".join(studioName[-2:])]), rating=rating, status=statmaps[status], count=count, slug=slug, genreplural=('' if len(genre) == 1 else 's'), genre=", ".join(genre[:-2] + [" & ".join(genre[-2:])]), vaName=", ".join(vaName[:-2] + [" & ".join(vaName[-2:])]) or "(unavailable)", synopsis=synopsis.replace("\n", " "))
 ##	manga lookup
 @commands('km')
 @example('.km One Punch Man')
