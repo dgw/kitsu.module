@@ -255,7 +255,7 @@ def fetch_character(query):
 	try:
 		Entry = Data['data'][0]
 		name = Entry['attributes'].get('name')
-		description = web.decode(bleach.clean(Entry['attributes'].get('description')[:250].replace('<br/>', ' '), strip=True))
+		description = web.decode(bleach.clean(Entry['attributes'].get('description')[:250].replace('<br/>', ' ').replace('<br>', ' '), strip=True))
 	except IndexError:
 		return "No results found."
 ##	character search results output
