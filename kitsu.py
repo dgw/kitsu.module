@@ -1,20 +1,39 @@
 # -*- coding: utf-8 -*-
-##	python modules
 from __future__ import unicode_literals
+
 from sopel.module import commands, example
 from sopel import web
+
 from slugify import slugify
 import requests
 import bleach
-##	global variables
+
+# global variables
 api = 'https://kitsu.io/api/edge/'
-aFilter = 'anime?page[limit]=1&page[offset]=0&include=genres,animeProductions.producer,castings.person&filter[subtype]=tv,movie,ova,ona,special&fields[anime]=canonicalTitle,titles,subtype,episodeCount,startDate,slug,synopsis,averageRating,status&fields[animeProductions]=producer,role&fields[castings]=voiceActor,featured,language,person&fields[genres]=name&fields[producers]=name&filter[text]=%s'
-mFilter = 'manga?page[limit]=1&page[offset]=0&include=genres,castings.person&filter[subtype]=manga,manhua,manhwa,novel&fields[manga]=canonicalTitle,titles,subtype,startDate,slug,synopsis,averageRating,status,serialization&fields[castings]=role,person&fields[genres]=name&fields[people]=name&filter[text]=%s'
-uFilter = 'users?include=waifu&fields[users]=name,waifuOrHusbando,slug&fields[characters]=canonicalName&page[limit]=1&filter[name]=%s'
+aFilter = (
+	'anime?page[limit]=1&page[offset]=0&include=genres,animeProductions.producer,castings.person&filter[subtype]=tv,'
+	'movie,ova,ona,special&fields[anime]=canonicalTitle,titles,subtype,episodeCount,startDate,slug,synopsis,'
+	'averageRating,status&fields[animeProductions]=producer,role&fields[castings]=voiceActor,featured,language,person'
+	'&fields[genres]=name&fields[producers]=name&filter[text]=%s'
+)
+mFilter = (
+	'manga?page[limit]=1&page[offset]=0&include=genres,castings.person&filter[subtype]=manga,manhua,manhwa,novel'
+	'&fields[manga]=canonicalTitle,titles,subtype,startDate,slug,synopsis,averageRating,status,serialization'
+	'&fields[castings]=role,person&fields[genres]=name&fields[people]=name&filter[text]=%s'
+)
+uFilter = (
+	'users?include=waifu&fields[users]=name,waifuOrHusbando,slug&fields[characters]=canonicalName&page[limit]=1'
+	'&filter[name]=%s'
+)
 sFilter = '/stats?filter[kind]=anime-amount-consumed'
-lFilter = '/library-entries?page[limit]=3&sort=-progressedAt,updatedAt&include=media&fields[libraryEntries]=status,progress&fields[anime]=canonicalTitle&fields[manga]=canonicalTitle'
+lFilter = (
+	'/library-entries?page[limit]=3&sort=-progressedAt,updatedAt&include=media&fields[libraryEntries]=status,progress'
+	'&fields[anime]=canonicalTitle&fields[manga]=canonicalTitle'
+)
 cFilter = 'characters?fields[characters]=slug,name,description&page[limit]=1&filter[name]=%s'
-###	truncate algorithm function
+
+
+# truncation function
 #def truncate_result(fetch_anime(query)):
 #	if len(fetch_anime(query)) > 400:
 #		last_space = fetch_anime(query).rfind(' ', 0, 400)
@@ -23,14 +42,18 @@ cFilter = 'characters?fields[characters]=slug,name,description&page[limit]=1&fil
 #		else:
 #			fetch_anime(query) = fetch_anime(query)[:last_space]
 #		return fetch_anime(query)
-##	anime lookup
+
+
+# anime lookup command
 @commands('ka')
 @example('.ka Clannad')
 def ka(bot, trigger):
 	query = trigger.group(2) or ''
 	query = slugify(query)
 	bot.say(fetch_anime(query))
-##	anime search query
+
+
+# query kitsu's anime API
 def fetch_anime(query):
 	if not query:
 		return "No search query provided."
@@ -91,16 +114,20 @@ def fetch_anime(query):
 		vaName = list(set([each['attributes']['name'] for each in included if each['id'] in vaID]))
 	except IndexError:
 		return
-##	anime search results output
+	# return formatted result
 	return "{title} ({date}) | {subtype} | Studio: {studioName} | Score: {rating} | {status} | Eps: {count} | https://kitsu.io/anime/{slug} | Genre{genreplural}: {genre} | VA: {vaName} | Synopsis: {synopsis}".format(title=title, date=date, subtype=submaps[subtype], studioName=", ".join(studioName[:-2] + [" & ".join(studioName[-2:])]), rating=rating, status=statmaps[status], count=count, slug=slug, genreplural=('' if len(genre) == 1 else 's'), genre=", ".join(genre[:-2] + [" & ".join(genre[-2:])]), vaName=", ".join(vaName[:-2] + [" & ".join(vaName[-2:])]) or "(unavailable)", synopsis=synopsis.replace("\n", " "))
-##	manga lookup
+
+
+# manga lookup command
 @commands('km')
 @example('.km One Punch Man')
 def km(bot, trigger):
 	query = trigger.group(2) or ''
 	query = slugify(query)
 	bot.say("%s" % fetch_manga(query))
-##	manga search query
+
+
+# query kitsu's manga API
 def fetch_manga(query):
 	if not query:
 		return "No search query provided."
@@ -154,15 +181,19 @@ def fetch_manga(query):
 			people = ['None']
 	except IndexError:
 		return
-###	manga search results output
+	# return formatted result
 	return "{title} ({date}) | {subtype} | Author{authorplural}: {people} | Score: {rating} | {status} | https://kitsu.io/manga/{slug} | Genre{genreplural}: {genre} | Synopsis: {synopsis}...".format(title=title, date=date, subtype=submaps[subtype], rating=rating, status=statmaps[status], slug=slug, synopsis=synopsis.replace("\n", " "), genreplural=('' if len(genre) == 1 else 's'), genre=", ".join(genre[:-2] + [" & ".join(genre[-2:])]), authorplural=('' if len(people) == 1 else 's'), people=", ".join(people[:-2] + [" & ".join(people[-2:])]))
-##	user lookup
+
+
+# user lookup command
 @commands('ku')
 @example('.ku SleepingPanda')
 def ku(bot, trigger):
 	query = trigger.group(2) or None
 	bot.say("%s" % fetch_user(query))
-##	user search query
+
+
+# query kitsu's user API
 def fetch_user(query):
 	if not query:
 		return "No search query provided."
@@ -189,13 +220,15 @@ def fetch_user(query):
 	uid = uEntry['id']
 	slug = uEntry['attributes']['slug']
 	userName = uEntry['attributes']['name']
-##	waifu logic
+
+	# waifu logic
 	waifuOrHusbando = uEntry['attributes'].get('waifuOrHusbando')
 	if waifuOrHusbando:
 		waifu = uData['included'][0]['attributes'].get('canonicalName')
 	else:
 		waifu = 'Not set!'
-##	stats logic
+
+	# stats logic
 	statsLink = api + 'users/' + uid + sFilter
 	stats = requests.get(statsLink)
 	try:
@@ -205,7 +238,8 @@ def fetch_user(query):
 	try:
 		sEntry = sData['data'][0]
 		lwoa = sEntry['attributes']['statsData'].get('time')
-##	library logic
+
+		# library logic
 		libraryLink = api + 'users/' + uid + lFilter
 		library = requests.get(libraryLink)
 		lData = library.json()
@@ -223,16 +257,21 @@ def fetch_user(query):
 			slug += ', {l2Name} to {l2Prog}'.format(l2Name=l2Name, l2Prog=l2Prog)
 	except IndexError:
 		return "No stats found for this user."
-##	user search results output
+
+	# return formatted result
 	return "{userName}'s {waifuOrHusbando} is {waifu}, and they have wasted {lwoa} minutes of their life on Japanese cartoons. Tell {userName} how much of a weeb they are at https://kitsu.io/users/{slug}".format(userName=userName, waifuOrHusbando=waifuOrHusbando.lower(), waifu=waifu, lwoa=lwoa, slug=slug)
-##	character lookup
+
+
+# character lookup command
 @commands('kc')
 @example('.kc Son Goku')
 def kc(bot, trigger):
 	query = trigger.group(2) or ''
 	query = slugify(query)
 	bot.say("%s" % fetch_character(query))
-##	character search query
+
+
+# query kitsu's character API
 def fetch_character(query):
 	if not query:
 		return "No search query provided."
@@ -258,5 +297,5 @@ def fetch_character(query):
 		description = web.decode(bleach.clean(Entry['attributes'].get('description')[:250].replace('<br/>', ' ').replace('<br>', ' '), strip=True))
 	except IndexError:
 		return "No results found."
-##	character search results output
+	# return formatted result
 	return "{name} - Description: {description}...".format(name=name, description=description)
