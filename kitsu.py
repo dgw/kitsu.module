@@ -57,6 +57,7 @@ def ka(bot, trigger):
 def fetch_anime(query):
 	if not query:
 		return "No search query provided."
+
 	try:
 		anime = requests.get(api + aFilter % query, timeout=(15.0, 10.0))
 	except requests.exceptions.ConnectTimeout:
@@ -65,57 +66,93 @@ def fetch_anime(query):
 		return "Could not connect to server."
 	except requests.exceptions.ReadTimeout:
 		return "Server took too long to reply."
+
 	try:
 		anime.raise_for_status()
 	except requests.exceptions.HTTPError as e:
 		return "HTTP error: " + e.message
+
 	try:
 		Data = anime.json()
 	except ValueError:
 		return anime.content
+
 	try:
 		Entry = Data['data'][0]
-		title = Entry['attributes'].get('canonicalTitle','None')
-		enTitle = Entry['attributes']['titles'].get('en',None)
+		title = Entry['attributes'].get('canonicalTitle', 'None')
+		enTitle = Entry['attributes']['titles'].get('en', None)
 		if enTitle and not enTitle == title:
 			title += ' ({enTitle})'.format(enTitle=enTitle)
-		status = Entry['attributes'].get('status','Unknown')
-		statmaps = {'current':'Airing', 'finished':'Finished Airing', 'tba':'TBA', 'unreleased':'Unreleased', 'upcoming':'Upcoming'}
+		status = Entry['attributes'].get('status', 'Unknown')
+		statmaps = {
+			'current': 'Airing',
+			'finished': 'Finished Airing',
+			'tba': 'TBA',
+			'unreleased': 'Unreleased',
+			'upcoming': 'Upcoming',
+		}
 		subtype = Entry['attributes'].get('subtype')
-		submaps = {'TV':'TV', 'movie':'Movie', 'OVA':'OVA', 'ONA':'ONA', 'special':'Special'}
-		count = Entry['attributes'].get('episodeCount','Unknown')
-		date = Entry['attributes'].get('startDate','Unknown')[:4]
+		submaps = {
+			'TV': 'TV',
+			'movie': 'Movie',
+			'OVA': 'OVA',
+			'ONA': 'ONA',
+			'special': 'Special',
+		}
+		count = Entry['attributes'].get('episodeCount', 'Unknown')
+		date = Entry['attributes'].get('startDate', 'Unknown')[:4]
 		slug = Entry['attributes'].get('slug')
 		rating = Entry['attributes'].get('averageRating')
-		synopsis = Entry['attributes'].get('synopsis','None found.')[:140]
+		synopsis = Entry['attributes'].get('synopsis', 'None found.')[:140]
 	except IndexError:
 		return "No results found."
+
 	try:
 		included = Data.get('included')
 	except IndexError:
 		return
+
 	try:
 		genre = [each['attributes']['name'] for each in included if each['type'] == 'genres']
 	except IndexError:
 		return
+
 	try:
-		studioID = [each['relationships']['producer']['data']['id'] for each in included if each['attributes'].get('role') == 'studio']
+		studioID = [each['relationships']['producer']['data']['id']
+					for each in included
+					if each['attributes'].get('role') == 'studio']
 	except IndexError:
 		return
+
 	try:
 		studioName = list(set([each['attributes']['name'] for each in included if each['id'] in studioID]))
 	except IndexError:
 		return
+
 	try:
-		vaID = list(set([each['relationships']['person']['data']['id'] for each in included if each['attributes'].get('voiceActor') and each['attributes'].get('featured') and each['attributes'].get('language') == 'Japanese']))
+		vaID = list(set([each['relationships']['person']['data']['id']
+						for each in included
+						if each['attributes'].get('voiceActor')
+						and each['attributes'].get('featured')
+						and each['attributes'].get('language') == 'Japanese']))
 	except IndexError:
 		return
+
 	try:
 		vaName = list(set([each['attributes']['name'] for each in included if each['id'] in vaID]))
 	except IndexError:
 		return
-	# return formatted result
-	return "{title} ({date}) | {subtype} | Studio: {studioName} | Score: {rating} | {status} | Eps: {count} | https://kitsu.io/anime/{slug} | Genre{genreplural}: {genre} | VA: {vaName} | Synopsis: {synopsis}".format(title=title, date=date, subtype=submaps[subtype], studioName=", ".join(studioName[:-2] + [" & ".join(studioName[-2:])]), rating=rating, status=statmaps[status], count=count, slug=slug, genreplural=('' if len(genre) == 1 else 's'), genre=", ".join(genre[:-2] + [" & ".join(genre[-2:])]), vaName=", ".join(vaName[:-2] + [" & ".join(vaName[-2:])]) or "(unavailable)", synopsis=synopsis.replace("\n", " "))
+
+	return (
+		"{title} ({date}) | {subtype} | Studio: {studioName} | Score: {rating} | {status} | Eps: {count} | "
+		"https://kitsu.io/anime/{slug} | Genre{genreplural}: {genre} | VA: {vaName} | Synopsis: {synopsis}"
+		.format(title=title, date=date, subtype=submaps[subtype], studioName=", ".join(studioName[:-2]
+			+ [" & ".join(studioName[-2:])]), rating=rating, status=statmaps[status], count=count, slug=slug,
+			genreplural=('' if len(genre) == 1 else 's'), genre=", ".join(genre[:-2] + [" & ".join(genre[-2:])]),
+			vaName=", ".join(vaName[:-2] + [" & ".join(vaName[-2:])]) or "(unavailable)",
+			synopsis=synopsis.replace("\n", " ")
+		)
+	)
 
 
 # manga lookup command
@@ -131,6 +168,7 @@ def km(bot, trigger):
 def fetch_manga(query):
 	if not query:
 		return "No search query provided."
+
 	try:
 		manga = requests.get(api + mFilter % query, timeout=(15.0, 10.0))
 	except requests.exceptions.ConnectTimeout:
@@ -139,34 +177,53 @@ def fetch_manga(query):
 		return "Could not connect to server."
 	except requests.exceptions.ReadTimeout:
 		return "Server took too long to reply."
+
 	try:
 		manga.raise_for_status()
 	except requests.exceptions.HTTPError as e:
 		return "HTTP error: " + e.message
+
 	try:
 		Data = manga.json()
 	except ValueError:
 		return manga.content
+
 	try:
 		Entry = Data['data'][0]
-		title = Entry['attributes'].get('canonicalTitle','None')
-		enTitle = Entry['attributes']['titles'].get('en',None)
+		title = Entry['attributes'].get('canonicalTitle', 'None')
+		enTitle = Entry['attributes']['titles'].get('en', None)
 		if enTitle and not enTitle == title:
 			title += ' ({enTitle})'.format(enTitle=enTitle)
-		status = Entry['attributes'].get('status','Unknown')
-		statmaps = {'current':'Publishing', 'finished':'Completed Publishing', 'tba':'TBA', 'unreleased':'Unreleased', 'upcoming':'Upcoming'}
+		status = Entry['attributes'].get('status', 'Unknown')
+		statmaps = {
+			'current': 'Publishing',
+			'finished': 'Completed Publishing',
+			'tba': 'TBA',
+			'unreleased': 'Unreleased',
+			'upcoming': 'Upcoming',
+		}
 		subtype = Entry['attributes'].get('subtype')
-		submaps = {'doujin':'Doujin', 'manga':'Manga', 'manhua':'Manhua', 'manhwa':'Manhwa', 'novel':'Novel', 'oel':'Oel', 'oneshot':'Oneshot'}
-		date = Entry['attributes'].get('startDate','Unknown')[:4]
+		submaps = {
+			'doujin': 'Doujin',
+			'manga': 'Manga',
+			'manhua': 'Manhua',
+			'manhwa': 'Manhwa',
+			'novel': 'Novel',
+			'oel': 'Oel',
+			'oneshot': 'Oneshot',
+		}
+		date = Entry['attributes'].get('startDate', 'Unknown')[:4]
 		slug = Entry['attributes'].get('slug')
 		rating = Entry['attributes'].get('averageRating')
-		synopsis = Entry['attributes'].get('synopsis','None found.')[:140]
+		synopsis = Entry['attributes'].get('synopsis', 'None found.')[:140]
 	except IndexError:
 		return "No results found."
+
 	try:
 		included = Data.get('included')
 	except IndexError:
 		return
+
 	try:
 		if included:
 			genre = [each['attributes']['name'] for each in included if each['type'] == 'genres']
@@ -174,6 +231,7 @@ def fetch_manga(query):
 			genre = ['None']
 	except IndexError:
 		return
+
 	try:
 		if included:
 			people = [each['attributes']['name'] for each in included if each['type'] == 'people']
@@ -181,8 +239,16 @@ def fetch_manga(query):
 			people = ['None']
 	except IndexError:
 		return
-	# return formatted result
-	return "{title} ({date}) | {subtype} | Author{authorplural}: {people} | Score: {rating} | {status} | https://kitsu.io/manga/{slug} | Genre{genreplural}: {genre} | Synopsis: {synopsis}...".format(title=title, date=date, subtype=submaps[subtype], rating=rating, status=statmaps[status], slug=slug, synopsis=synopsis.replace("\n", " "), genreplural=('' if len(genre) == 1 else 's'), genre=", ".join(genre[:-2] + [" & ".join(genre[-2:])]), authorplural=('' if len(people) == 1 else 's'), people=", ".join(people[:-2] + [" & ".join(people[-2:])]))
+
+	return (
+		"{title} ({date}) | {subtype} | Author{authorplural}: {people} | Score: {rating} | {status} | "
+		"https://kitsu.io/manga/{slug} | Genre{genreplural}: {genre} | Synopsis: {synopsis}..."
+		.format(title=title, date=date, subtype=submaps[subtype], rating=rating, status=statmaps[status], slug=slug,
+			synopsis=synopsis.replace("\n", " "), genreplural=('' if len(genre) == 1 else 's'),
+			genre=", ".join(genre[:-2] + [" & ".join(genre[-2:])]), authorplural=('' if len(people) == 1 else 's'),
+			people=", ".join(people[:-2] + [" & ".join(people[-2:])])
+		)
+	)
 
 
 # user lookup command
@@ -197,6 +263,7 @@ def ku(bot, trigger):
 def fetch_user(query):
 	if not query:
 		return "No search query provided."
+
 	try:
 		user = requests.get(api + uFilter % query, timeout=(10.0, 4.0))
 	except requests.exceptions.ConnectTimeout:
@@ -205,61 +272,67 @@ def fetch_user(query):
 		return "Could not connect to server."
 	except requests.exceptions.ReadTimeout:
 		return "Server took too long to send results."
+
 	try:
 		user.raise_for_status()
 	except requests.exceptions.HTTPError as e:
 		return "HTTP error: " + e.message
+
 	try:
 		uData = user.json()
 	except ValueError:
 		return user.content
+
 	try:
 		uEntry = uData['data'][0]
 	except IndexError:
 		return "No results found."
+
 	uid = uEntry['id']
 	slug = uEntry['attributes']['slug']
 	userName = uEntry['attributes']['name']
 
-	# waifu logic
 	waifuOrHusbando = uEntry['attributes'].get('waifuOrHusbando')
 	if waifuOrHusbando:
 		waifu = uData['included'][0]['attributes'].get('canonicalName')
 	else:
 		waifu = 'Not set!'
 
-	# stats logic
 	statsLink = api + 'users/' + uid + sFilter
 	stats = requests.get(statsLink)
+
 	try:
 		sData = stats.json()
 	except ValueError:
 		return stats.content
+
 	try:
 		sEntry = sData['data'][0]
 		lwoa = sEntry['attributes']['statsData'].get('time')
 
-		# library logic
 		libraryLink = api + 'users/' + uid + lFilter
 		library = requests.get(libraryLink)
 		lData = library.json()
-		l0Name = lData['included'][0]['attributes'].get('canonicalTitle',None)
+		l0Name = lData['included'][0]['attributes'].get('canonicalTitle', None)
 		if l0Name:
 			l0Prog = lData['data'][0]['attributes'].get('progress')
 			slug += '. Last Updated: {l0Name} to {l0Prog}'.format(l0Name=l0Name, l0Prog=l0Prog)
-		l1Name = lData['included'][1]['attributes'].get('canonicalTitle',None)
+		l1Name = lData['included'][1]['attributes'].get('canonicalTitle', None)
 		if l1Name:
 			l1Prog = lData['data'][1]['attributes'].get('progress')
 			slug += ', {l1Name} to {l1Prog}'.format(l1Name=l1Name, l1Prog=l1Prog)
-		l2Name = lData['included'][2]['attributes'].get('canonicalTitle',None)
+		l2Name = lData['included'][2]['attributes'].get('canonicalTitle', None)
 		if l2Name:
 			l2Prog = lData['data'][2]['attributes'].get('progress')
 			slug += ', {l2Name} to {l2Prog}'.format(l2Name=l2Name, l2Prog=l2Prog)
 	except IndexError:
 		return "No stats found for this user."
 
-	# return formatted result
-	return "{userName}'s {waifuOrHusbando} is {waifu}, and they have wasted {lwoa} minutes of their life on Japanese cartoons. Tell {userName} how much of a weeb they are at https://kitsu.io/users/{slug}".format(userName=userName, waifuOrHusbando=waifuOrHusbando.lower(), waifu=waifu, lwoa=lwoa, slug=slug)
+	return (
+		"{userName}'s {waifuOrHusbando} is {waifu}, and they have wasted {lwoa} minutes of their life on Japanese "
+		"cartoons. Tell {userName} how much of a weeb they are at https://kitsu.io/users/{slug}"
+		.format(userName=userName, waifuOrHusbando=waifuOrHusbando.lower(), waifu=waifu, lwoa=lwoa, slug=slug)
+	)
 
 
 # character lookup command
@@ -275,6 +348,7 @@ def kc(bot, trigger):
 def fetch_character(query):
 	if not query:
 		return "No search query provided."
+
 	try:
 		character = requests.get(api + cFilter % query, timeout=(10.0, 4.0))
 	except requests.exceptions.ConnectTimeout:
@@ -283,19 +357,23 @@ def fetch_character(query):
 		return "Could not connect to server."
 	except requests.exceptions.ReadTimeout:
 		return "Server took too long to reply."
+
 	try:
 		character.raise_for_status()
 	except requests.exceptions.HTTPError as e:
 		return "HTTP error: " + e.message
+
 	try:
 		Data = character.json()
 	except ValueError:
 		return character.content
+
 	try:
 		Entry = Data['data'][0]
 		name = Entry['attributes'].get('name')
-		description = web.decode(bleach.clean(Entry['attributes'].get('description')[:250].replace('<br/>', ' ').replace('<br>', ' '), strip=True))
+		description = web.decode(bleach.clean(Entry['attributes'].get('description')[:250]
+								.replace('<br/>', ' ').replace('<br>', ' '), strip=True))
 	except IndexError:
 		return "No results found."
-	# return formatted result
+
 	return "{name} - Description: {description}...".format(name=name, description=description)
