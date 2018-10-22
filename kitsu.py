@@ -34,14 +34,21 @@ cFilter = 'characters?fields[characters]=slug,name,description&page[limit]=1&fil
 
 
 # truncation function
-#def truncate_result(fetch_anime(query)):
-#	if len(fetch_anime(query)) > 400:
-#		last_space = fetch_anime(query).rfind(' ', 0, 400)
-#		if last_space == -1:
-#			fetch_anime(query) = fetch_anime(query)[:400]
-#		else:
-#			fetch_anime(query) = fetch_anime(query)[:last_space]
-#		return fetch_anime(query)
+def truncate_result(text):
+    if len(text) > 400:
+        last_space = text.rfind(' ', 0, 400)
+        if last_space == -1:
+            r = text[:400]
+        else:
+            r = text[:last_space]
+
+        # add ellipsis only if the input was actually shortened
+        if len(r) < len(text):
+            r += '…'
+
+        return r
+
+    return text
 
 
 # anime lookup command
@@ -50,7 +57,7 @@ cFilter = 'characters?fields[characters]=slug,name,description&page[limit]=1&fil
 def ka(bot, trigger):
     query = trigger.group(2) or ''
     query = slugify(query)
-    bot.say(fetch_anime(query))
+    bot.say(truncate_result(fetch_anime(query)))
 
 
 # query kitsu's anime API
@@ -103,7 +110,7 @@ def fetch_anime(query):
         date = Entry['attributes'].get('startDate', 'Unknown')[:4]
         slug = Entry['attributes'].get('slug')
         rating = Entry['attributes'].get('averageRating')
-        synopsis = Entry['attributes'].get('synopsis', 'None found.')[:140]
+        synopsis = Entry['attributes'].get('synopsis', 'None found.')
     except IndexError:
         return "No results found."
 
@@ -160,7 +167,7 @@ def fetch_anime(query):
 def km(bot, trigger):
     query = trigger.group(2) or ''
     query = slugify(query)
-    bot.say("%s" % fetch_manga(query))
+    bot.say(truncate_result(fetch_manga(query)))
 
 
 # query kitsu's manga API
@@ -214,7 +221,7 @@ def fetch_manga(query):
         date = Entry['attributes'].get('startDate', 'Unknown')[:4]
         slug = Entry['attributes'].get('slug')
         rating = Entry['attributes'].get('averageRating')
-        synopsis = Entry['attributes'].get('synopsis', 'None found.')[:140]
+        synopsis = Entry['attributes'].get('synopsis', 'None found.')
     except IndexError:
         return "No results found."
 
@@ -254,7 +261,7 @@ def fetch_manga(query):
 @example('.ku SleepingPanda')
 def ku(bot, trigger):
     query = trigger.group(2) or None
-    bot.say("%s" % fetch_user(query))
+    bot.say(truncate_result(fetch_user(query)))
 
 
 # query kitsu's user API
@@ -339,7 +346,7 @@ def fetch_user(query):
 def kc(bot, trigger):
     query = trigger.group(2) or ''
     query = slugify(query)
-    bot.say("%s" % fetch_character(query))
+    bot.say(truncate_result(fetch_character(query)))
 
 
 # query kitsu's character API
@@ -369,9 +376,9 @@ def fetch_character(query):
     try:
         Entry = Data['data'][0]
         name = Entry['attributes'].get('name')
-        description = web.decode(bleach.clean(Entry['attributes'].get('description')[:250]
+        description = web.decode(bleach.clean(Entry['attributes'].get('description')
                                  .replace('<br/>', ' ').replace('<br>', ' '), strip=True))
     except IndexError:
         return "No results found."
 
-    return "{name} - Description: {description}...".format(name=name, description=description)
+    return "{name} - Description: {description}".format(name=name, description=description)
