@@ -260,7 +260,7 @@ def fetch_manga(query):
 @commands('ku')
 @example('.ku SleepingPanda')
 def ku(bot, trigger):
-    query = trigger.group(2) or None
+    query = trigger.group(3) or None
     bot.say(truncate_result(fetch_user(query)))
 
 
