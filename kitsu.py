@@ -115,7 +115,7 @@ def fetch_anime(query):
         return "No results found."
 
     try:
-        included = Data.get('included')
+        included = Data.get('included', [])
     except IndexError:
         return
 
@@ -123,6 +123,8 @@ def fetch_anime(query):
         genre = [each['attributes']['name'] for each in included if each['type'] == 'genres']
     except IndexError:
         return
+    if not genre:  # empty
+        genre = ['Unknown']
 
     try:
         studioID = [each['relationships']['producer']['data']['id']
@@ -135,6 +137,8 @@ def fetch_anime(query):
         studioName = list(set([each['attributes']['name'] for each in included if each['id'] in studioID]))
     except IndexError:
         return
+    if not studioName:  # empty
+        studioName = ['Unknown']
 
     try:
         vaID = list(set([each['relationships']['person']['data']['id']
@@ -149,6 +153,8 @@ def fetch_anime(query):
         vaName = list(set([each['attributes']['name'] for each in included if each['id'] in vaID]))
     except IndexError:
         return
+    if not vaName:  # empty
+        vaName = ['Unknown']
 
     return (
         "{title} ({date}) | {subtype} | Studio: {studioName} | Score: {rating} | {status} | Eps: {count} | "
@@ -156,8 +162,7 @@ def fetch_anime(query):
         .format(title=title, date=date, subtype=submaps[subtype], studioName=", ".join(studioName[:-2]
                 + [" & ".join(studioName[-2:])]), rating=rating, status=statmaps[status], count=count, slug=slug,
                 genreplural=('' if len(genre) == 1 else 's'), genre=", ".join(genre[:-2] + [" & ".join(genre[-2:])]),
-                vaName=", ".join(vaName[:-2] + [" & ".join(vaName[-2:])]) or "(unavailable)",
-                synopsis=synopsis.replace("\n", " "))
+                vaName=", ".join(vaName[:-2] + [" & ".join(vaName[-2:])]), synopsis=synopsis.replace("\n", " "))
     )
 
 
@@ -226,25 +231,23 @@ def fetch_manga(query):
         return "No results found."
 
     try:
-        included = Data.get('included')
+        included = Data.get('included', [])
     except IndexError:
         return
 
     try:
-        if included:
-            genre = [each['attributes']['name'] for each in included if each['type'] == 'genres']
-        else:
-            genre = ['None']
+        genre = [each['attributes']['name'] for each in included if each['type'] == 'genres']
     except IndexError:
         return
+    if not genre:  # empty
+        genre = ['Unknown']
 
     try:
-        if included:
-            people = [each['attributes']['name'] for each in included if each['type'] == 'people']
-        else:
-            people = ['None']
+        people = [each['attributes']['name'] for each in included if each['type'] == 'people']
     except IndexError:
         return
+    if not people:  # empty
+        people = ['Unknown']
 
     return (
         "{title} ({date}) | {subtype} | Author{authorplural}: {people} | Score: {rating} | {status} | "
