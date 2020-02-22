@@ -115,7 +115,7 @@ def fetch_anime(query):
         return "No results found."
 
     try:
-        included = Data.get('included')
+        included = Data.get('included', [])
     except IndexError:
         return
 
@@ -226,7 +226,7 @@ def fetch_manga(query):
         return "No results found."
 
     try:
-        included = Data.get('included')
+        included = Data.get('included', [])
     except IndexError:
         return
 
