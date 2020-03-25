@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from sopel.module import commands, example
+from sopel.tools import time
 from sopel import web
 
 from slugify import slugify
@@ -316,7 +317,8 @@ def fetch_user(query):
 
     try:
         sEntry = sData['data'][0]
-        lwoa = sEntry['attributes']['statsData'].get('time')
+        seconds = sEntry['attributes']['statsData'].get('time')
+        lwoa = time.seconds_to_human(seconds)[:-4]  # Remove " ago" from the end
 
         libraryLink = api + 'users/' + uid + lFilter
         library = requests.get(libraryLink)
@@ -337,7 +339,7 @@ def fetch_user(query):
         return "No stats found for this user."
 
     return (
-        "{userName}'s {waifuOrHusbando} is {waifu}, and they have wasted {lwoa} minutes of their life on Japanese "
+        "{userName}'s {waifuOrHusbando} is {waifu}, and they have wasted {lwoa} of their life on Japanese "
         "cartoons. Tell {userName} how much of a weeb they are at https://kitsu.io/users/{slug}"
         .format(userName=userName, waifuOrHusbando=waifuOrHusbando.lower(), waifu=waifu, lwoa=lwoa, slug=slug)
     )
