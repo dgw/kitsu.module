@@ -10,7 +10,7 @@ import requests
 import bleach
 
 # global variables
-api = 'https://kitsu.io/api/edge/'
+API_BASE = 'https://kitsu.io/api/edge/'
 aFilter = (
     'anime?page[limit]=1&page[offset]=0&include=genres,animeProductions.producer,castings.person&filter[subtype]=tv,'
     'movie,ova,ona,special&fields[anime]=canonicalTitle,titles,subtype,episodeCount,startDate,slug,synopsis,'
@@ -33,6 +33,15 @@ lFilter = (
 )
 cFilter = 'characters?fields[characters]=slug,name,description&page[limit]=1&filter[name]=%s'
 
+API_ENDPOINTS = {
+    'anime': API_BASE + aFilter,
+    'character': API_BASE + cFilter,
+    'library': API_BASE + lFilter,
+    'manga': API_BASE + mFilter,
+    'stats': API_BASE + sFilter,
+    'user': API_BASE + uFilter,
+}
+
 
 # truncation function
 def truncate_result(text):
@@ -52,6 +61,33 @@ def truncate_result(text):
     return text
 
 
+# API helpers
+class KitsuAPIError(Exception):
+    """Basic exception type for errors raised when using the Kitsu API."""
+    pass
+
+
+def api_fetch(kind, query: str | None = None):
+    """Fetch data from the Kitsu API endpoint for the given kind & query."""
+    url = API_ENDPOINTS.get(kind)
+    if not url:
+        raise ValueError("Unrecognized API type %r specified." % kind)
+    if query:
+        # some API endpoints don't need a query
+        url = url % query
+
+    try:
+        response = requests.get(url, timeout=(15.0, 10.0))
+    except requests.exceptions.ConnectTimeout:
+        raise KitsuAPIError("Connection timed out.")
+    except requests.exceptions.ConnectionError:
+        raise KitsuAPIError("Could not connect to server.")
+    except requests.exceptions.ReadTimeout:
+        raise KitsuAPIError("Server took too long to reply.")
+
+    return response
+
+
 # anime lookup command
 @commands('ka')
 @example('.ka Clannad')
@@ -67,13 +103,9 @@ def fetch_anime(query):
         return "No search query provided."
 
     try:
-        anime = requests.get(api + aFilter % query, timeout=(15.0, 10.0))
-    except requests.exceptions.ConnectTimeout:
-        return "Connection timed out."
-    except requests.exceptions.ConnectionError:
-        return "Could not connect to server."
-    except requests.exceptions.ReadTimeout:
-        return "Server took too long to reply."
+        anime = api_fetch(API_BASE + aFilter % query)
+    except KitsuAPIError as exc:
+        return str(exc)
 
     try:
         anime.raise_for_status()
@@ -182,13 +214,9 @@ def fetch_manga(query):
         return "No search query provided."
 
     try:
-        manga = requests.get(api + mFilter % query, timeout=(15.0, 10.0))
-    except requests.exceptions.ConnectTimeout:
-        return "Connection timed out."
-    except requests.exceptions.ConnectionError:
-        return "Could not connect to server."
-    except requests.exceptions.ReadTimeout:
-        return "Server took too long to reply."
+        manga = api_fetch(API_BASE + mFilter % query)
+    except KitsuAPIError as exc:
+        return str(exc)
 
     try:
         manga.raise_for_status()
@@ -274,13 +302,9 @@ def fetch_user(query):
         return "No search query provided."
 
     try:
-        user = requests.get(api + uFilter % query, timeout=(10.0, 4.0))
-    except requests.exceptions.ConnectTimeout:
-        return "Connection timed out."
-    except requests.exceptions.ConnectionError:
-        return "Could not connect to server."
-    except requests.exceptions.ReadTimeout:
-        return "Server took too long to send results."
+        user = api_fetch(API_BASE + uFilter % query)
+    except KitsuAPIError as exc:
+        return str(exc)
 
     try:
         user.raise_for_status()
@@ -307,7 +331,7 @@ def fetch_user(query):
     else:
         waifu = 'Not set!'
 
-    statsLink = api + 'users/' + uid + sFilter
+    statsLink = API_BASE + 'users/' + uid + sFilter
     stats = requests.get(statsLink)
 
     try:
@@ -320,7 +344,7 @@ def fetch_user(query):
         seconds = sEntry['attributes']['statsData'].get('time')
         lwoa = time.seconds_to_human(seconds)[:-4]  # Remove " ago" from the end
 
-        libraryLink = api + 'users/' + uid + lFilter
+        libraryLink = API_BASE + 'users/' + uid + lFilter
         library = requests.get(libraryLink)
         lData = library.json()
         l0Name = lData['included'][0]['attributes'].get('canonicalTitle', None)
@@ -360,13 +384,9 @@ def fetch_character(query):
         return "No search query provided."
 
     try:
-        character = requests.get(api + cFilter % query, timeout=(10.0, 4.0))
-    except requests.exceptions.ConnectTimeout:
-        return "Connection timed out."
-    except requests.exceptions.ConnectionError:
-        return "Could not connect to server."
-    except requests.exceptions.ReadTimeout:
-        return "Server took too long to reply."
+        character = api_fetch(API_BASE + cFilter % query)
+    except KitsuAPIError as exc:
+        return str(exc)
 
     try:
         character.raise_for_status()
