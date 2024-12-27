@@ -78,7 +78,7 @@ def fetch_anime(query):
     try:
         anime.raise_for_status()
     except requests.exceptions.HTTPError as e:
-        return "HTTP error: " + e.message
+        return "HTTP error: " + str(e)
 
     try:
         Data = anime.json()
@@ -193,7 +193,7 @@ def fetch_manga(query):
     try:
         manga.raise_for_status()
     except requests.exceptions.HTTPError as e:
-        return "HTTP error: " + e.message
+        return "HTTP error: " + str(e)
 
     try:
         Data = manga.json()
@@ -285,7 +285,7 @@ def fetch_user(query):
     try:
         user.raise_for_status()
     except requests.exceptions.HTTPError as e:
-        return "HTTP error: " + e.message
+        return "HTTP error: " + str(e)
 
     try:
         uData = user.json()
@@ -371,7 +371,7 @@ def fetch_character(query):
     try:
         character.raise_for_status()
     except requests.exceptions.HTTPError as e:
-        return "HTTP error: " + e.message
+        return "HTTP error: " + str(e)
 
     try:
         Data = character.json()
